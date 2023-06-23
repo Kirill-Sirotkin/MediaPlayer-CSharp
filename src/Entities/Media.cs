@@ -5,10 +5,12 @@ class Media
     private Guid _id;
     private float _durationSec;
     private float _currentPlace;
+    private string _creatorName;
 
-    public Media(float duration, Guid id)
+    public Media(float duration, Guid id, string creatorName)
     {
         _id = id;
+        _creatorName = creatorName;
         _durationSec = duration;
         _currentPlace = 0f;
     }
