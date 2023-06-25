@@ -1,12 +1,14 @@
 using System.Globalization;
+using Utils;
 
 namespace MediaApp;
 
 class App
 {
-    MediaFactory? factory;
-    MediaPlayer player = MediaPlayer.Instance;
-    MediaLibrary library = MediaLibrary.Instance;
+    MediaFactory? _factory;
+    MediaPlayer _player = MediaPlayer.Instance;
+    MediaLibrary _library = MediaLibrary.Instance;
+    MediaNotifier _notifier = MediaNotifier.Instance;
 
     private static readonly Lazy<App> _instance = new Lazy<App>(() => new App());
 
@@ -24,12 +26,12 @@ class App
         string? name = Console.ReadLine();
         if (name is null) name = "unknown";
 
-        factory = new(name);
+        _factory = new(name);
 
         Console.WriteLine("Here you can enter commands to control the app. Type \"help\" to see available commands.");
         while (!stopApp)
         {
-            Console.Write("Your command: ");
+            Console.Write("App command: ");
             string? command = Console.ReadLine();
 
             switch (command)
@@ -40,8 +42,8 @@ class App
                 case "quit":
                     stopApp = true;
                     break;
-                case "create":
-                    CreateMedia();
+                case "lib":
+                    BrowseLibrary();
                     break;
                 default:
                     Console.WriteLine("Unknown command. Type \"help\" to see available commands.");
@@ -55,8 +57,28 @@ class App
     private void PrintCommands()
     {
         Console.WriteLine("\"help\" - see available commands");
-        Console.WriteLine("\"create\" - start media creation");
+        Console.WriteLine("\"lib\" - start library browsing");
         Console.WriteLine("\"quit\" - stop the application");
+    }
+
+    private void PrintLibraryCommands()
+    {
+        Console.WriteLine("\"help\" - see available commands");
+        Console.WriteLine("\"c m\" - start media creation");
+        Console.WriteLine("\"m\" - show all media");
+        Console.WriteLine("\"pl\" - show all playlists");
+        Console.WriteLine("\"b pl\" - browse playlists");
+        Console.WriteLine("\"quit\" - quit library browsing");
+    }
+
+    private void PrintPlaylistCommands()
+    {
+        Console.WriteLine("\"help\" - see available commands");
+        Console.WriteLine("\"c pl\" - start playlist creation");
+        Console.WriteLine("\"m\" - show all media");
+        Console.WriteLine("\"pl\" - show all playlists");
+        Console.WriteLine("\"play\" - choose a playlist to play");
+        Console.WriteLine("\"quit\" - quit library browsing");
     }
 
     private void CreateMedia()
@@ -80,6 +102,13 @@ class App
                     correctType = true;
                     mediaType = MediaType.Video;
                     break;
+                case "a":
+                    correctType = true;
+                    break;
+                case "v":
+                    correctType = true;
+                    mediaType = MediaType.Video;
+                    break;
                 case "quit":
                     Console.WriteLine("Cancelling media creation...");
                     return;
@@ -88,6 +117,10 @@ class App
                     break;
             }
         }
+
+        Console.Write("Specify media name: ");
+        string? mediaName = Console.ReadLine();
+        if (mediaName is null) mediaName = "unknown";
 
         Console.Write("Specify media duration (format: mm.ss): ");
         bool correctDuration = false;
@@ -208,6 +241,142 @@ class App
         }
 
         Media? media = null;
-        if (factory is not null) media = factory.CreateMedia(mediaType, duration, (horizontalResolution, verticalResolution), genre);
+        if (_factory is not null) media = _factory.CreateMedia
+        (
+            mediaType,
+            Converter.MinSecToSec(duration),
+            mediaName,
+            (horizontalResolution, verticalResolution),
+            genre
+        );
+        if (media is not null)
+        {
+            _library.AddMedia(media);
+            Console.WriteLine("Media created successfully!");
+        }
+    }
+
+    private void CreatePlaylist()
+    {
+        Console.WriteLine("Welcome to playlist creation!");
+        Console.WriteLine("You can cancel playlist creation at any time by typing \"quit\".");
+
+        Console.Write("Specify the name for your playlist: ");
+        string? name = Console.ReadLine();
+        if (name is null) name = "unknown";
+
+        _library.AddPlaylist(name);
+        Console.WriteLine("New playlist added!");
+    }
+
+    private void BrowseLibrary()
+    {
+        Console.WriteLine("Welcome to your library! Type \"help\" to see available commands.");
+
+        bool stopLibrary = false;
+        while (!stopLibrary)
+        {
+            Console.Write("Library command: ");
+            string? command = Console.ReadLine();
+
+            switch (command)
+            {
+                case "help":
+                    PrintLibraryCommands();
+                    break;
+                case "quit":
+                    stopLibrary = true;
+                    break;
+                case "c m":
+                    CreateMedia();
+                    break;
+                case "m":
+                    _library.PrintMedia();
+                    break;
+                case "pl":
+                    _library.PrintPlaylists();
+                    break;
+                case "b pl":
+                    BrowsePlaylists();
+                    break;
+                default:
+                    Console.WriteLine("Unknown command. Type \"help\" to see available commands.");
+                    break;
+            }
+        }
+    }
+
+    private void BrowsePlaylists()
+    {
+        Console.WriteLine("Welcome to your playlists! Type \"help\" to see available commands.");
+
+        bool stopPlaylists = false;
+        while (!stopPlaylists)
+        {
+            Console.Write("Playlist command: ");
+            string? command = Console.ReadLine();
+
+            switch (command)
+            {
+                case "help":
+                    PrintPlaylistCommands();
+                    break;
+                case "quit":
+                    stopPlaylists = true;
+                    break;
+                case "c pl":
+                    CreatePlaylist();
+                    break;
+                case "m":
+                    _library.PrintMedia();
+                    break;
+                case "pl":
+                    _library.PrintPlaylists();
+                    break;
+                case "play":
+                    ChoosePaylist();
+                    break;
+                default:
+                    Console.WriteLine("Unknown command. Type \"help\" to see available commands.");
+                    break;
+            }
+        }
+    }
+
+    private void ChoosePaylist()
+    {
+        Console.WriteLine("Choose a playlist by typing its number (type \"quit\" to cancel): ");
+        List<Playlist> playlists = new();
+        playlists.Add(_library.AllMedia);
+        playlists.AddRange(_library.CustomPlaylists);
+        for (int i = 0; i < playlists.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}. {playlists[i].ToString()}");
+        }
+
+        bool stopPlaylists = false;
+        int index = 0;
+        while (!stopPlaylists)
+        {
+            string? pl = Console.ReadLine();
+            if (pl is null)
+            {
+                Console.WriteLine("Please enter a number or \"quit\"");
+                continue;
+            }
+            if (!int.TryParse(pl, out index))
+            {
+                Console.WriteLine("Please enter a number or \"quit\"");
+                continue;
+            }
+            if (index < 1 || index > playlists.Count)
+            {
+                Console.WriteLine("Please enter a number corresponding to a playlist");
+                continue;
+            }
+            stopPlaylists = true;
+        }
+
+        _library.PlayPlaylist(playlists[index - 1]);
     }
 }

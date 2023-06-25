@@ -37,9 +37,13 @@ sealed class MediaPlayer : IEmitter
 
     public void Seek(float place)
     {
-        int wholePart = (int)MathF.Floor(place);
-        int decimalPart = (int)(((decimal)place % 1) * 100);
-        if (_currentMedia is not null) _currentMedia.Seek(wholePart * 60 + decimalPart);
+        if (_currentMedia is not null) _currentMedia.Seek(place);
+    }
+
+    public void Clear()
+    {
+        if (_currentMedia is not null) _currentMedia.Pause();
+        _mediaQueue.Clear();
     }
 
     public void Notify(string message)
