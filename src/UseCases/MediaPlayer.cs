@@ -13,6 +13,10 @@ sealed class MediaPlayer : IEmitter
     {
         get => _instance.Value;
     }
+    public Media? CurrentMedia
+    {
+        get => _currentMedia;
+    }
 
     public void AddMedia(Media media)
     {

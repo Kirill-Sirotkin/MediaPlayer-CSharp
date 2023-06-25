@@ -40,7 +40,7 @@ class App
                 case "help":
                     PrintCommands();
                     break;
-                case "quit":
+                case "q":
                     stopApp = true;
                     break;
                 case "lib":
@@ -59,7 +59,7 @@ class App
     {
         Console.WriteLine("\"help\" - see available commands");
         Console.WriteLine("\"lib\" - start library browsing");
-        Console.WriteLine("\"quit\" - stop the application");
+        Console.WriteLine("\"q\" - stop the application");
     }
 
     private void PrintLibraryCommands()
@@ -69,7 +69,7 @@ class App
         Console.WriteLine("\"m\" - show all media");
         Console.WriteLine("\"pl\" - show all playlists");
         Console.WriteLine("\"b pl\" - browse playlists");
-        Console.WriteLine("\"quit\" - quit library browsing");
+        Console.WriteLine("\"q\" - quit library browsing");
     }
 
     private void PrintPlaylistCommands()
@@ -80,13 +80,13 @@ class App
         Console.WriteLine("\"pl\" - show all playlists");
         Console.WriteLine("\"play\" - choose a playlist to play");
         Console.WriteLine("\"e\" - edit a playlist");
-        Console.WriteLine("\"quit\" - quit playlist browsing");
+        Console.WriteLine("\"q\" - quit playlist browsing");
     }
 
     private void CreateMedia()
     {
         Console.WriteLine("Welcome to media creation!");
-        Console.WriteLine("You can cancel media creation at any time by typing \"quit\".");
+        Console.WriteLine("You can cancel media creation at any time by typing \"q\".");
 
         Console.Write("Specify media type (\"audio\" or \"video\"): ");
         bool correctType = false;
@@ -111,7 +111,7 @@ class App
                     correctType = true;
                     mediaType = MediaType.Video;
                     break;
-                case "quit":
+                case "q":
                     Console.WriteLine("Cancelling media creation...");
                     return;
                 default:
@@ -135,7 +135,7 @@ class App
                 Console.WriteLine("Please enter a duration in mm.ss:");
                 continue;
             };
-            if (dur == "quit")
+            if (dur == "q")
             {
                 Console.WriteLine("Cancelling media creation...");
                 return;
@@ -189,7 +189,7 @@ class App
                             correctGenre = true;
                             genre = "Metal";
                             break;
-                        case "quit":
+                        case "q":
                             Console.WriteLine("Cancelling media creation...");
                             return;
                         default:
@@ -231,7 +231,7 @@ class App
                             verticalResolution = 360;
                             horizontalResolution = 640;
                             break;
-                        case "quit":
+                        case "q":
                             Console.WriteLine("Cancelling media creation...");
                             return;
                         default:
@@ -261,7 +261,7 @@ class App
     private void CreatePlaylist()
     {
         Console.WriteLine("Welcome to playlist creation!");
-        Console.WriteLine("You can cancel playlist creation at any time by typing \"quit\".");
+        Console.WriteLine("You can cancel playlist creation at any time by typing \"q\".");
 
         Console.Write("Specify the name for your playlist: ");
         string? name = Console.ReadLine();
@@ -286,7 +286,7 @@ class App
                 case "help":
                     PrintLibraryCommands();
                     break;
-                case "quit":
+                case "q":
                     stopLibrary = true;
                     break;
                 case "c m":
@@ -323,7 +323,7 @@ class App
                 case "help":
                     PrintPlaylistCommands();
                     break;
-                case "quit":
+                case "q":
                     stopPlaylists = true;
                     break;
                 case "c pl":
@@ -353,8 +353,10 @@ class App
         Console.WriteLine("\"help\" - see available commands");
         Console.WriteLine("\"ps\" - pause");
         Console.WriteLine("\"pl\" - play");
-        Console.WriteLine("\"sk\" - skip to next media");
-        Console.WriteLine("\"quit\" - stop player");
+        Console.WriteLine("\"sp\" - skip to next media");
+        Console.WriteLine("\"sk\" - seek new place in media");
+        Console.WriteLine("\"st\" - show media status");
+        Console.WriteLine("\"q\" - stop player");
     }
 
     private void PlayPlaylist()
@@ -377,7 +379,7 @@ class App
                 case "help":
                     PrintPlayerCommands();
                     break;
-                case "quit":
+                case "q":
                     _player.Pause();
                     stopPlaylists = true;
                     break;
@@ -387,7 +389,7 @@ class App
                 case "pl":
                     _player.Play();
                     break;
-                case "sk":
+                case "sp":
                     try
                     {
                         _player.Skip();
@@ -398,6 +400,12 @@ class App
                         stopPlaylists = true;
                     }
                     break;
+                case "sk":
+                    SeekMedia(_player.CurrentMedia);
+                    break;
+                case "st":
+                    Console.WriteLine($"Playing: {_player.CurrentMedia?.ToString()} | currently at - {Converter.SecToMinSec(_player.CurrentMedia?.CurrentPlace ?? 0f)}");
+                    break;
                 default:
                     Console.WriteLine("Unknown command. Type \"help\" to see available commands.");
                     break;
@@ -405,9 +413,54 @@ class App
         }
     }
 
+    private void SeekMedia(Media? m)
+    {
+        if (m is null) return;
+
+        Console.Write("Specify seek time (format: mm.ss): ");
+        bool correctDuration = false;
+        float duration = 0.1f;
+        while (!correctDuration)
+        {
+            string? dur = Console.ReadLine();
+            if (dur is null)
+            {
+                Console.WriteLine("Please enter seek in mm.ss:");
+                continue;
+            };
+            if (dur == "q")
+            {
+                Console.WriteLine("Cancelling seek...");
+                return;
+            }
+            try
+            {
+                CultureInfo culture = (CultureInfo)CultureInfo.CurrentCulture.Clone();
+                culture.NumberFormat.NumberDecimalSeparator = ".";
+
+                duration = float.Parse(dur, culture);
+            }
+            catch
+            {
+                Console.WriteLine("Wrong seek format. Please use mm.ss:");
+                continue;
+            }
+
+            try
+            {
+                _player.Seek(Converter.MinSecToSec(duration));
+                correctDuration = true;
+            }
+            catch (Utils.ExceptionHandler e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+    }
+
     private Playlist? ChoosePlaylist()
     {
-        Console.WriteLine("Choose a playlist by typing its number (type \"quit\" to cancel): ");
+        Console.WriteLine("Choose a playlist by typing its number (type \"q\" to cancel): ");
         List<Playlist> playlists = new();
         playlists.Add(_library.AllMedia);
         playlists.AddRange(_library.CustomPlaylists);
@@ -423,13 +476,13 @@ class App
             string? pl = Console.ReadLine();
             if (pl is null)
             {
-                Console.WriteLine("Please enter a number or \"quit\"");
+                Console.WriteLine("Please enter a number or \"q\"");
                 continue;
             }
-            if (pl == "quit") return null;
+            if (pl == "q") return null;
             if (!int.TryParse(pl, out index))
             {
-                Console.WriteLine("Please enter a number or \"quit\"");
+                Console.WriteLine("Please enter a number or \"q\"");
                 continue;
             }
             if (index < 1 || index > playlists.Count)
@@ -452,7 +505,7 @@ class App
         Console.WriteLine("\"s l\" - sort media in playlist by length (duration)");
         Console.WriteLine("\"s t\" - sort media in playlist by type");
         Console.WriteLine("\"p\" - show media in playlist");
-        Console.WriteLine("\"quit\" - quit playlist editing");
+        Console.WriteLine("\"q\" - quit playlist editing");
     }
 
     private void EditPlaylist()
@@ -474,7 +527,7 @@ class App
                 case "help":
                     PrintEditCommands();
                     break;
-                case "quit":
+                case "q":
                     stopPlaylists = true;
                     break;
                 case "add":
@@ -511,7 +564,11 @@ class App
             return;
         }
 
-        Console.WriteLine("Choose a media to add by typing its number (type \"quit\" to cancel): ");
+        Console.WriteLine("Choose a media to add by typing its number (type \"q\" to cancel): ");
+        for (int i = 0; i < allMedia.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}. {allMedia[i].ToString()}");
+        }
 
         bool stopPlaylists = false;
         int index = 0;
@@ -520,13 +577,13 @@ class App
             string? media = Console.ReadLine();
             if (media is null)
             {
-                Console.WriteLine("Please enter a number or \"quit\"");
+                Console.WriteLine("Please enter a number or \"q\"");
                 continue;
             }
-            if (media == "quit") return;
+            if (media == "q") return;
             if (!int.TryParse(media, out index))
             {
-                Console.WriteLine("Please enter a number or \"quit\"");
+                Console.WriteLine("Please enter a number or \"q\"");
                 continue;
             }
             if (index < 1 || index > allMedia.Count)
@@ -536,7 +593,7 @@ class App
             }
 
             pl.AddMedia(allMedia[index - 1]);
-            Console.WriteLine("Media added! You can continue, or type \"quit\" to stop adding");
+            Console.WriteLine("Media added! You can continue, or type \"q\" to stop adding");
         }
     }
 
@@ -549,11 +606,7 @@ class App
             return;
         }
 
-        Console.WriteLine("Choose a media to remove by typing its number (type \"quit\" to cancel): ");
-        for (int i = 0; i < allMedia.Count; i++)
-        {
-            Console.WriteLine($"{i + 1}. {allMedia[i].ToString()}");
-        }
+        Console.WriteLine("Choose a media to remove by typing its number (type \"q\" to cancel): ");
 
         bool stopPlaylists = false;
         int index = 0;
@@ -567,13 +620,13 @@ class App
             string? media = Console.ReadLine();
             if (media is null)
             {
-                Console.WriteLine("Please enter a number or \"quit\"");
+                Console.WriteLine("Please enter a number or \"q\"");
                 continue;
             }
-            if (media == "quit") return;
+            if (media == "q") return;
             if (!int.TryParse(media, out index))
             {
-                Console.WriteLine("Please enter a number or \"quit\"");
+                Console.WriteLine("Please enter a number or \"q\"");
                 continue;
             }
             if (index < 1 || index > allMedia.Count)
@@ -583,7 +636,7 @@ class App
             }
 
             pl.RemoveMedia(allMedia[index - 1]);
-            Console.WriteLine("Media added! You can continue, or type \"quit\" to stop adding");
+            Console.WriteLine("Media added! You can continue, or type \"q\" to stop adding");
         }
     }
 }
