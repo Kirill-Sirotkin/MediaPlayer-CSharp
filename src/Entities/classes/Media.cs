@@ -38,7 +38,7 @@ class Media
     }
     public virtual void Seek(float place)
     {
-        if (place < 0 || place > _durationSec) return; // Seek outside of media duration
+        if (place < 0 || place > _durationSec) throw ExceptionHandler.SeekOutOfBounds();
         _currentPlace = place;
         MediaPlayer.Instance.Notify($"[>>] {_name} | moving to - {Converter.SecToMinSec(_currentPlace)}");
     }

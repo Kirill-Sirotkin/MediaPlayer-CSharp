@@ -388,7 +388,15 @@ class App
                     _player.Play();
                     break;
                 case "sk":
-                    if (!_player.Skip()) stopPlaylists = true;
+                    try
+                    {
+                        _player.Skip();
+                    }
+                    catch (Utils.ExceptionHandler e)
+                    {
+                        Console.WriteLine(e.ToString());
+                        stopPlaylists = true;
+                    }
                     break;
                 default:
                     Console.WriteLine("Unknown command. Type \"help\" to see available commands.");

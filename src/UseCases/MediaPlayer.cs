@@ -1,3 +1,5 @@
+using Utils;
+
 namespace MediaApp;
 
 sealed class MediaPlayer : IEmitter
@@ -28,7 +30,7 @@ sealed class MediaPlayer : IEmitter
         if (_currentMedia is not null) _currentMedia.Pause();
     }
 
-    public bool Skip()
+    public void Skip()
     {
         Pause();
         try
@@ -37,10 +39,9 @@ sealed class MediaPlayer : IEmitter
         }
         catch
         {
-            return false;
+            throw ExceptionHandler.PlaylistEmpty();
         }
         Play();
-        return true;
     }
 
     public void Seek(float place)
