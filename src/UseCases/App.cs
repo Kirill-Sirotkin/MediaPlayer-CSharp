@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Globalization;
 using Utils;
 
@@ -78,7 +79,8 @@ class App
         Console.WriteLine("\"m\" - show all media");
         Console.WriteLine("\"pl\" - show all playlists");
         Console.WriteLine("\"play\" - choose a playlist to play");
-        Console.WriteLine("\"quit\" - quit library browsing");
+        Console.WriteLine("\"e\" - edit a playlist");
+        Console.WriteLine("\"quit\" - quit playlist browsing");
     }
 
     private void CreateMedia()
@@ -334,7 +336,10 @@ class App
                     _library.PrintPlaylists();
                     break;
                 case "play":
-                    ChoosePaylist();
+                    PlayPlaylist();
+                    break;
+                case "e":
+                    EditPlaylist();
                     break;
                 default:
                     Console.WriteLine("Unknown command. Type \"help\" to see available commands.");
@@ -343,7 +348,56 @@ class App
         }
     }
 
-    private void ChoosePaylist()
+    private void PrintPlayerCommands()
+    {
+        Console.WriteLine("\"help\" - see available commands");
+        Console.WriteLine("\"ps\" - pause");
+        Console.WriteLine("\"pl\" - play");
+        Console.WriteLine("\"sk\" - skip to next media");
+        Console.WriteLine("\"quit\" - stop player");
+    }
+
+    private void PlayPlaylist()
+    {
+        Playlist? pl = ChoosePlaylist();
+        if (pl is null) return;
+        Console.WriteLine($"Starting playlist {pl.ToString()}");
+        Console.WriteLine("Type \"help\" to see list of available commands");
+
+        _library.PlayPlaylist(pl);
+
+        bool stopPlaylists = false;
+        while (!stopPlaylists)
+        {
+            Console.Write("Player command: ");
+            string? command = Console.ReadLine();
+
+            switch (command)
+            {
+                case "help":
+                    PrintPlayerCommands();
+                    break;
+                case "quit":
+                    _player.Pause();
+                    stopPlaylists = true;
+                    break;
+                case "ps":
+                    _player.Pause();
+                    break;
+                case "pl":
+                    _player.Play();
+                    break;
+                case "sk":
+                    if (!_player.Skip()) stopPlaylists = true;
+                    break;
+                default:
+                    Console.WriteLine("Unknown command. Type \"help\" to see available commands.");
+                    break;
+            }
+        }
+    }
+
+    private Playlist? ChoosePlaylist()
     {
         Console.WriteLine("Choose a playlist by typing its number (type \"quit\" to cancel): ");
         List<Playlist> playlists = new();
@@ -364,6 +418,7 @@ class App
                 Console.WriteLine("Please enter a number or \"quit\"");
                 continue;
             }
+            if (pl == "quit") return null;
             if (!int.TryParse(pl, out index))
             {
                 Console.WriteLine("Please enter a number or \"quit\"");
@@ -377,6 +432,150 @@ class App
             stopPlaylists = true;
         }
 
-        _library.PlayPlaylist(playlists[index - 1]);
+        return playlists[index - 1];
+    }
+
+    private void PrintEditCommands()
+    {
+        Console.WriteLine("\"help\" - see available commands");
+        Console.WriteLine("\"add\" - add media to playlist");
+        Console.WriteLine("\"rm\" - remove media from playlist");
+        Console.WriteLine("\"sh\" - shuffle playlist");
+        Console.WriteLine("\"s l\" - sort media in playlist by length (duration)");
+        Console.WriteLine("\"s t\" - sort media in playlist by type");
+        Console.WriteLine("\"p\" - show media in playlist");
+        Console.WriteLine("\"quit\" - quit playlist editing");
+    }
+
+    private void EditPlaylist()
+    {
+        Playlist? pl = ChoosePlaylist();
+        if (pl is null) return;
+
+        Console.WriteLine($"Chosen playlist: {pl.ToString()}");
+        Console.WriteLine("Type \"help\" to see list of available commands");
+
+        bool stopPlaylists = false;
+        while (!stopPlaylists)
+        {
+            Console.Write("Edit command: ");
+            string? command = Console.ReadLine();
+
+            switch (command)
+            {
+                case "help":
+                    PrintEditCommands();
+                    break;
+                case "quit":
+                    stopPlaylists = true;
+                    break;
+                case "add":
+                    AddMediaToPlaylist(pl);
+                    break;
+                case "rm":
+                    RemoveMediaFromPlaylist(pl);
+                    break;
+                case "sh":
+                    pl.Shuffle();
+                    break;
+                case "s l":
+                    pl.SortByLength();
+                    break;
+                case "s t":
+                    pl.SortByType();
+                    break;
+                case "p":
+                    pl.PrintPlaylist();
+                    break;
+                default:
+                    Console.WriteLine("Unknown command. Type \"help\" to see available commands.");
+                    break;
+            }
+        }
+    }
+
+    private void AddMediaToPlaylist(Playlist pl)
+    {
+        ReadOnlyCollection<Media> allMedia = _library.AllMedia.AllMedia;
+        if (allMedia.Count < 1)
+        {
+            Console.WriteLine("No media exists in the library");
+            return;
+        }
+
+        Console.WriteLine("Choose a media to add by typing its number (type \"quit\" to cancel): ");
+
+        bool stopPlaylists = false;
+        int index = 0;
+        while (!stopPlaylists)
+        {
+            string? media = Console.ReadLine();
+            if (media is null)
+            {
+                Console.WriteLine("Please enter a number or \"quit\"");
+                continue;
+            }
+            if (media == "quit") return;
+            if (!int.TryParse(media, out index))
+            {
+                Console.WriteLine("Please enter a number or \"quit\"");
+                continue;
+            }
+            if (index < 1 || index > allMedia.Count)
+            {
+                Console.WriteLine("Please enter a number corresponding to a media");
+                continue;
+            }
+
+            pl.AddMedia(allMedia[index - 1]);
+            Console.WriteLine("Media added! You can continue, or type \"quit\" to stop adding");
+        }
+    }
+
+    private void RemoveMediaFromPlaylist(Playlist pl)
+    {
+        ReadOnlyCollection<Media> allMedia = pl.AllMedia;
+        if (allMedia.Count < 1)
+        {
+            Console.WriteLine("No media exists in the playlist");
+            return;
+        }
+
+        Console.WriteLine("Choose a media to remove by typing its number (type \"quit\" to cancel): ");
+        for (int i = 0; i < allMedia.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}. {allMedia[i].ToString()}");
+        }
+
+        bool stopPlaylists = false;
+        int index = 0;
+        while (!stopPlaylists)
+        {
+            allMedia = pl.AllMedia;
+            for (int i = 0; i < allMedia.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {allMedia[i].ToString()}");
+            }
+            string? media = Console.ReadLine();
+            if (media is null)
+            {
+                Console.WriteLine("Please enter a number or \"quit\"");
+                continue;
+            }
+            if (media == "quit") return;
+            if (!int.TryParse(media, out index))
+            {
+                Console.WriteLine("Please enter a number or \"quit\"");
+                continue;
+            }
+            if (index < 1 || index > allMedia.Count)
+            {
+                Console.WriteLine("Please enter a number corresponding to a media");
+                continue;
+            }
+
+            pl.RemoveMedia(allMedia[index - 1]);
+            Console.WriteLine("Media added! You can continue, or type \"quit\" to stop adding");
+        }
     }
 }

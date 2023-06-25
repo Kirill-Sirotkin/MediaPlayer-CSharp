@@ -36,20 +36,20 @@ class Playlist
         _media.Remove(m);
     }
 
-    public void Randomize()
+    public void Shuffle()
     {
-        List<Media> randomized = new();
+        List<Media> shuffled = new();
         Random rnd = new();
 
         int count = _media.Count;
         for (int i = 0; i < count; i++)
         {
             int index = rnd.Next(0, _media.Count);
-            randomized.Add(_media[index]);
+            shuffled.Add(_media[index]);
             _media.RemoveAt(index);
         }
 
-        _media = randomized;
+        _media = shuffled;
     }
 
     public void SortByType()

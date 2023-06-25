@@ -28,11 +28,19 @@ sealed class MediaPlayer : IEmitter
         if (_currentMedia is not null) _currentMedia.Pause();
     }
 
-    public void Skip()
+    public bool Skip()
     {
         Pause();
-        _currentMedia = _mediaQueue.Pop();
+        try
+        {
+            _currentMedia = _mediaQueue.Pop();
+        }
+        catch
+        {
+            return false;
+        }
         Play();
+        return true;
     }
 
     public void Seek(float place)
