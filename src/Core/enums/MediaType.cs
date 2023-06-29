@@ -1,4 +1,4 @@
-namespace MediaApp;
+namespace MediaApp.Core;
 
 enum MediaType
 {

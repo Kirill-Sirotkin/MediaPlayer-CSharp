@@ -1,4 +1,7 @@
-namespace MediaApp;
+using MediaApp.Business;
+using MediaApp.Core;
+
+namespace MediaApp.Application;
 
 class MediaNotifier : ISubscriber
 {

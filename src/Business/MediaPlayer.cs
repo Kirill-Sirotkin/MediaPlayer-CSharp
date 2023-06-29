@@ -1,6 +1,6 @@
-using Utils;
+using MediaApp.Core;
 
-namespace MediaApp;
+namespace MediaApp.Business;
 
 sealed class MediaPlayer : IEmitter
 {

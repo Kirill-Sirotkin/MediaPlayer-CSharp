@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
-using Utils;
+using MediaApp.Core;
 
-namespace MediaApp;
+namespace MediaApp.Business;
 
 class Playlist
 {

@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
+using MediaApp.Business;
 
-namespace MediaApp;
+namespace MediaApp.Application;
 
 class MediaLibrary
 {

@@ -1,8 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
-using Utils;
+using MediaApp.Business;
+using MediaApp.Core;
 
-namespace MediaApp;
+namespace MediaApp.Application;
 
 class App
 {
@@ -394,7 +395,7 @@ class App
                     {
                         _player.Skip();
                     }
-                    catch (Utils.ExceptionHandler e)
+                    catch (MediaApp.Core.ExceptionHandler e)
                     {
                         Console.WriteLine(e.ToString());
                         stopPlaylists = true;
@@ -451,7 +452,7 @@ class App
                 _player.Seek(Converter.MinSecToSec(duration));
                 correctDuration = true;
             }
-            catch (Utils.ExceptionHandler e)
+            catch (MediaApp.Core.ExceptionHandler e)
             {
                 Console.WriteLine(e.ToString());
             }

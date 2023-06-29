@@ -1,4 +1,4 @@
-﻿using MediaApp;
+﻿using MediaApp.Application;
 
 internal class Program
 {

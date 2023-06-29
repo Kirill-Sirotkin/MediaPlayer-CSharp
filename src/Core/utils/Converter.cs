@@ -1,4 +1,4 @@
-namespace Utils;
+namespace MediaApp.Core;
 
 static class Converter
 {
